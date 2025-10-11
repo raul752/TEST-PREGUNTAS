@@ -2,6 +2,7 @@
 """
 Quiz IA Show - Versión Streamlit (Web App)
 - Carga automática de listas desde GitHub (/LISTAS)
+- Arranca automáticamente con "CLUB ATLETICO HURACAN.txt"
 - Compatible con móviles
 - Audio con gTTS (Google Text-to-Speech)
 """
@@ -12,7 +13,6 @@ import re
 import base64
 from io import BytesIO
 import tempfile
-import time
 import requests
 
 # ===================== CONFIGURACIÓN DE PÁGINA =====================
@@ -193,6 +193,27 @@ def cargar_preguntas(archivo="preguntas.txt"):
 # ===================== INICIALIZAR SESSION STATE =====================
 if 'preguntas' not in st.session_state:
     st.session_state.preguntas = []
+    try:
+        # 🔰 Cargar lista por defecto al iniciar
+        default_url = "https://raw.githubusercontent.com/raul752/TEST-PREGUNTAS/main/LISTAS/CLUB%20ATLETICO%20HURACAN.txt"
+        response = requests.get(default_url)
+        if response.status_code == 200:
+            contenido = response.text
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode="w", encoding="utf-8") as tmp_file:
+                tmp_file.write(contenido)
+                tmp_path = tmp_file.name
+            preguntas_default = cargar_preguntas(tmp_path)
+            if preguntas_default:
+                st.session_state.preguntas = preguntas_default
+                st.session_state.indice_actual = 0
+                st.session_state.respuestas_usuario = []
+                st.session_state.quiz_finalizado = False
+                st.info("📘 Lista predeterminada cargada: CLUB ATLETICO HURACAN.txt")
+        else:
+            st.warning("⚠️ No se pudo cargar la lista predeterminada desde GitHub.")
+    except Exception as e:
+        st.error(f"Error cargando lista predeterminada: {e}")
+
 if 'indice_actual' not in st.session_state:
     st.session_state.indice_actual = 0
 if 'respuestas_usuario' not in st.session_state:
