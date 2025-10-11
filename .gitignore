@@ -1,0 +1,11 @@
+# Archivos de configuracion con tokens
+github-token.txt
+*.token
+*.secret
+
+# Archivos de sistema Windows
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
