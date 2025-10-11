@@ -141,9 +141,22 @@ if %errorlevel% equ 0 (
 )
 echo.
 
-:: ================= PUSH =================
+:: ================= SINCRONIZAR Y PUSH =================
 echo [7/7] 🚀 Subiendo a GitHub...
-git push -u origin main 2>&1
+
+:: Primero intentar sincronizar con GitHub
+echo    🔄 Sincronizando con GitHub...
+git pull origin main --rebase --allow-unrelated-histories 2>&1 | find "fatal" >nul
+if %errorlevel% equ 0 (
+    echo    ⚠️  Primera vez o repo vacío, continuando...
+)
+
+:: Ahora hacer push
+git push -u origin main 2>&1 | find "rejected" >nul
+if %errorlevel% equ 0 (
+    echo    ⚠️  Push rechazado, forzando sincronización...
+    git push -u origin main --force 2>&1
+)
 
 if %errorlevel% equ 0 (
     echo.
@@ -162,12 +175,12 @@ if %errorlevel% equ 0 (
     echo ║                    ❌ ERROR AL SUBIR                                        ║
     echo ╚════════════════════════════════════════════════════════════════════════════╝
     echo.
-    echo 🔍 Si el error dice "secret detected":
-    echo    1. Ve a: https://github.com/%GITHUB_USER%/%GITHUB_REPO%/settings
-    echo    2. Code security ^> Secret scanning
-    echo    3. Permite el push
+    echo 🔍 Posibles soluciones:
+    echo    1. Verifica que el token tenga permisos de "repo"
+    echo    2. Verifica que el repositorio exista en GitHub
+    echo    3. Revoca el token y crea uno nuevo
     echo.
-    echo 💡 O simplemente revoca el token viejo y crea uno nuevo
+    echo 🔗 Gestionar tokens: https://github.com/settings/tokens
     echo.
 )
 
