@@ -35,8 +35,8 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ===================== CSS PERSONALIZADO =====================
-st.markdown("""
+# ===================== CONFIGURACIÓN DE PÁGINA =====================
+st.set_page_config(
     page_title="Test de Preguntas - El Fruti",
     page_icon="🍓",
     layout="wide",
