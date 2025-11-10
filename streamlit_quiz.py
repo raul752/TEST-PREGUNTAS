@@ -302,5 +302,80 @@ with st.sidebar:
     st.markdown("---")
     st.info(f"📊 Total preguntas: {len(st.session_state.preguntas)}")
 
-# ===================== CONTENIDO PRINCIPAL (igual que el tuyo) =====================
-# (dejar igual desde aquí en adelante)
+# ===================== CONTENIDO PRINCIPAL =====================
+if not st.session_state.preguntas:
+    st.error("❌ No hay preguntas cargadas. Usa el panel lateral para elegir una lista de GitHub.")
+    st.stop()
+
+if not st.session_state.quiz_finalizado:
+    idx = st.session_state.indice_actual
+    total = len(st.session_state.preguntas)
+    progreso = (idx / total) * 100
+    st.markdown(f'<p class="progress-text">Progreso: {idx}/{total} preguntas</p>', unsafe_allow_html=True)
+    st.progress(progreso / 100)
+    q = st.session_state.preguntas[idx]
+    st.markdown(f"""
+    <div class="pregunta-box">
+        <p class="pregunta-text">❓ Pregunta {idx + 1} de {total}</p>
+        <p class="pregunta-text">{q['pregunta']}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if st.session_state.audio_enabled and GTTS_AVAILABLE:
+        texto = f"{q['pregunta']}. " + " ".join([f"Opción {chr(65+i)}. {op}." for i, op in enumerate(q['opciones'])])
+        audio_b64 = text_to_speech(texto, lang=st.session_state.voz_seleccionada['lang'], tld=st.session_state.voz_seleccionada['tld'])
+        if audio_b64: reproducir_audio(audio_b64)
+
+    st.markdown("### Selecciona tu respuesta:")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button(f"**A.** {q['opciones'][0]}", key="opt_A", use_container_width=True):
+            responder_pregunta(0)
+        if st.button(f"**C.** {q['opciones'][2]}", key="opt_C", use_container_width=True):
+            responder_pregunta(2)
+    with col2:
+        if st.button(f"**B.** {q['opciones'][1]}", key="opt_B", use_container_width=True):
+            responder_pregunta(1)
+        if st.button(f"**D.** {q['opciones'][3]}", key="opt_D", use_container_width=True):
+            responder_pregunta(3)
+else:
+    correctas = sum(1 for r in st.session_state.respuestas_usuario if r["es_correcta"])
+    total = len(st.session_state.respuestas_usuario)
+    porcentaje = int((correctas / total) * 100) if total > 0 else 0
+    if porcentaje >= 90:
+        eval_text, eval_color = "¡PERFECTO! 🌟", "#FFD700"
+    elif porcentaje >= 70:
+        eval_text, eval_color = "¡Muy bien! 👍", "#4CAF50"
+    else:
+        eval_text, eval_color = "Sigue practicando 📚", "#FFA500"
+    st.markdown(f"""
+    <div class="resultado-box">
+        <h1 style="color: #FFD700; font-size: 48px;">🏆 RESULTADO FINAL</h1>
+        <p class="score-text">{correctas} / {total}</p>
+        <p class="percentage-text">{porcentaje}% de aciertos</p>
+        <h2 style="color: {eval_color}; margin-top: 20px;">{eval_text}</h2>
+    </div>
+    """, unsafe_allow_html=True)
+    if st.session_state.audio_enabled and GTTS_AVAILABLE:
+        texto_resultado = f"Quiz finalizado. Obtuviste {correctas} de {total}. {eval_text}"
+        audio_b64 = text_to_speech(texto_resultado)
+        if audio_b64: reproducir_audio(audio_b64)
+    errores = [r for r in st.session_state.respuestas_usuario if not r["es_correcta"]]
+    if errores:
+        st.markdown("### ❌ Preguntas incorrectas:")
+        for err in errores:
+            iu, ic = ord(err['respuesta_usuario']) - 65, ord(err['respuesta_correcta']) - 65
+            st.markdown(f"""
+            <div class="error-box">
+                <p class="error-text">
+                    <strong>• Pregunta:</strong> {err['pregunta']}<br>
+                    <strong style="color: #ff5555;">Tu respuesta:</strong> {err['respuesta_usuario']}. {err['opciones'][iu]}<br>
+                    <strong style="color: #4CAF50;">Correcta:</strong> {err['respuesta_correcta']}. {err['opciones'][ic]}
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1,1,1])
+    with col2:
+        if st.button("🔄 Reiniciar Quiz", key="reiniciar_final", use_container_width=True):
+            reiniciar_quiz()
