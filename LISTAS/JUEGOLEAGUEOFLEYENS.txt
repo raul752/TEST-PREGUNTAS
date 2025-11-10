@@ -1,0 +1,179 @@
+1. ¿Cuál es el objetivo principal en una partida de League of Legends?
+A. Capturar todas las torres enemigas
+B. Acumular más asesinatos que el enemigo
+C. Destruir el Nexo enemigo*
+D. Mantener el control del mapa
+
+2. ¿Cuántos campeones puede elegir cada jugador en una partida estándar?
+A. Tres
+B. Uno*
+C. Dos
+D. Cuatro
+
+3. ¿Qué tipo de juego es League of Legends?
+A. Shooter en primera persona
+B. MOBA (Multiplayer Online Battle Arena)*
+C. RPG de mundo abierto
+D. Juego de estrategia por turnos
+
+4. ¿Cuántos jugadores hay por equipo en el modo clásico de la Grieta del Invocador?
+A. 3
+B. 4
+C. 5*
+D. 6
+
+5. ¿Cuál es el nombre del mapa principal de League of Legends?
+A. Abismo de los Lamentos
+B. Grieta del Invocador*
+C. Bosque Retorcido
+D. Dominio de Valoran
+
+6. ¿Qué rol se desempeña en la línea superior?
+A. Jungla
+B. Soporte
+C. Toplaner*
+D. Tirador
+
+7. ¿Qué recurso utilizan la mayoría de los campeones para lanzar habilidades?
+A. Energía
+B. Maná*
+C. Furia
+D. Carga
+
+8. ¿Qué campeón es conocido por la frase “Demacia!”?
+A. Darius
+B. Garen*
+C. Jarvan IV
+D. Lux
+
+9. ¿Qué monstruo otorga un beneficio de daño verdadero adicional al equipo que lo derrota?
+A. Barón Nashor
+B. Dragón Infernal
+C. Dragón Ancestral*
+D. Heraldo de la Grieta
+
+10. ¿Qué tipo de unidad son los “minions”?
+A. Campeones controlados por la IA
+B. Criaturas neutrales
+C. Súbditos de línea*
+D. Estructuras defensivas
+
+11. ¿Qué objeto proporciona visión en áreas del mapa?
+A. Hoja del Rey Arruinado
+B. Centinela de visión*
+C. Capa solar
+D. Botas de velocidad
+
+12. ¿Qué campeón es conocido por su capacidad de resucitar con su pasiva?
+A. Tryndamere
+B. Zac
+C. Anivia*
+D. Sion
+
+13. ¿Cuál es el rol principal del “jungla”?
+A. Proteger al tirador
+B. Farmear líneas
+C. Controlar objetivos neutrales y ayudar con emboscadas*
+D. Mantener visión en las líneas
+
+14. ¿Qué dragón mejora la velocidad de movimiento fuera de combate?
+A. Dragón de Viento*
+B. Dragón de Fuego
+C. Dragón de Agua
+D. Dragón de Montaña
+
+15. ¿Qué campeón es famoso por su “gancho” con la habilidad Q?
+A. Thresh*
+B. Blitzcrank
+C. Nautilus
+D. Pyke
+
+16. ¿Cuál de los siguientes no es un rol oficial en League of Legends?
+A. Top
+B. Jungla
+C. Tirador
+D. Asesino*
+
+17. ¿Cuál de estos campeones usa energía en lugar de maná?
+A. Yasuo
+B. Akali*
+C. Ahri
+D. Veigar
+
+18. ¿Qué objeto mitológico otorga robo de vida y daño físico?
+A. Eclipse*
+B. Liandry
+C. Vara de las Edades
+D. Morellonomicón
+
+19. ¿Qué campeón se transforma en animales al usar sus habilidades?
+A. Neeko
+B. Nidalee*
+C. Elise
+D. Kayn
+
+20. ¿Qué línea es más común para el rol de soporte?
+A. Superior
+B. Central
+C. Inferior*
+D. Jungla
+
+21. ¿Qué estructura genera súbditos mejorados al destruirse?
+A. Torre
+B. Inhibidor*
+C. Nexo
+D. Fuente
+
+22. ¿Qué campeón fue el primero creado en League of Legends?
+A. Singed*
+B. Ashe
+C. Ryze
+D. Teemo
+
+23. ¿Qué región del universo de League of Legends es conocida por su magia oscura?
+A. Demacia
+B. Noxus
+C. Islas de la Sombra*
+D. Piltover
+
+24. ¿Qué campeón es considerado un yordle?
+A. Heimerdinger*
+B. Ezreal
+C. Swain
+D. Fiora
+
+25. ¿Qué ocurre al matar al Barón Nashor?
+A. El equipo enemigo pierde visión
+B. Se otorga un buff de combate y potenciación de súbditos*
+C. Se destruyen las torres enemigas
+D. Se gana oro instantáneo
+
+26. ¿Qué hechizo de invocador permite desplazarse a corta distancia?
+A. Curar
+B. Destello*
+C. Teleportar
+D. Barrera
+
+27. ¿Qué significa “CS” en League of Legends?
+A. Combat Skill
+B. Champion Score
+C. Creep Score*
+D. Critical Strike
+
+28. ¿Cuál de los siguientes campeones pertenece a Zaun?
+A. Caitlyn
+B. Jinx*
+C. Garen
+D. Leona
+
+29. ¿Qué campeón tiene una forma demoníaca llamada “Rhaast”?
+A. Kayn*
+B. Aatrox
+C. Mordekaiser
+D. Nocturne
+
+30. ¿Qué modo de juego se desarrolla en el “Abismo de los Lamentos”?
+A. URF
+B. ARAM*
+C. TFT
+D. Nexus Blitz
