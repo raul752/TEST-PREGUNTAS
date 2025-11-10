@@ -15,8 +15,28 @@ from io import BytesIO
 import tempfile
 import requests
 
+# ===================== TOKEN SEGURO (desde Streamlit Secrets) =====================
+import openai
+
+# Carga el token de los secrets de Streamlit (Settings → Secrets)
+try:
+    TOKEN = st.secrets["TOKEN"]
+    openai.api_key = TOKEN
+    st.success("🔐 Token cargado desde Streamlit Secrets.")
+except Exception:
+    TOKEN = None
+    st.warning("⚠️ No se encontró TOKEN en los secrets. Algunas funciones pueden no estar disponibles.")
+
 # ===================== CONFIGURACIÓN DE PÁGINA =====================
 st.set_page_config(
+    page_title="Test de Preguntas - El Fruti",
+    page_icon="🍓",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# ===================== CSS PERSONALIZADO =====================
+st.markdown("""
     page_title="Test de Preguntas - El Fruti",
     page_icon="🍓",
     layout="wide",
