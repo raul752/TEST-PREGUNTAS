@@ -4,7 +4,7 @@ Quiz IA Show - Versión Streamlit (Web App)
 - Carga automática de listas desde GitHub (/LISTAS)
 - Arranca automáticamente con "CLUB ATLETICO HURACAN.txt"
 - Compatible con móviles
-- Audio con gTTS (Google Text-to-Speech)
+- Audio con gTTS (Google Text-to-Speech) - CORREGIDO
 """
 
 import streamlit as st
@@ -14,9 +14,9 @@ import base64
 from io import BytesIO
 import tempfile
 import requests
+import hashlib
 
 # ===================== TOKEN GITHUB SEGURO =====================
-# ⚙️ Lee el token desde Streamlit Secrets (Settings → Secrets)
 try:
     GITHUB_TOKEN = st.secrets["github"]["token"]
     headers = {"Authorization": f"token {GITHUB_TOKEN}"}
@@ -149,21 +149,15 @@ def text_to_speech(text, lang="es", tld="com.ar"):
         st.error(f"Error generando audio: {e}")
         return None
 
-def reproducir_audio(audio_base64):
+def reproducir_audio(audio_base64, audio_id):
+    """Reproduce audio con un ID único para forzar regeneración"""
     if audio_base64:
-        html_audio = f'''
-        <audio id="tts_audio" autoplay style="display:none;">
+        st.markdown(f"""
+        <audio autoplay key="{audio_id}">
             <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
         </audio>
-        <script>
-        var audio = document.getElementById("tts_audio");
-        if (audio) {{
-            audio.volume = 1.0;
-            audio.play().catch(function(err){{ console.log("Audio bloqueado:", err); }});
-        }}
-        </script>
-        '''
-        st.markdown(html_audio, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+
 # ===================== CARGAR PREGUNTAS =====================
 def cargar_preguntas(archivo="preguntas.txt"):
     try:
@@ -225,12 +219,24 @@ if 'preguntas' not in st.session_state:
                 st.session_state.indice_actual = 0
                 st.session_state.respuestas_usuario = []
                 st.session_state.quiz_finalizado = False
+                st.session_state.audio_counter = 0  # NUEVO: contador para forzar regeneración
                 st.info("📘 Lista predeterminada cargada: CLUB ATLETICO HURACAN.txt")
     except Exception as e:
         st.error(f"Error inicial: {e}")
 
-for key in ['indice_actual', 'respuestas_usuario', 'quiz_finalizado', 'audio_enabled']:
-    st.session_state.setdefault(key, 0 if key == 'indice_actual' else [] if key == 'respuestas_usuario' else False if key == 'quiz_finalizado' else True)
+for key in ['indice_actual', 'respuestas_usuario', 'quiz_finalizado', 'audio_enabled', 'audio_counter']:
+    if key not in st.session_state:
+        if key == 'indice_actual':
+            st.session_state[key] = 0
+        elif key == 'respuestas_usuario':
+            st.session_state[key] = []
+        elif key == 'quiz_finalizado':
+            st.session_state[key] = False
+        elif key == 'audio_enabled':
+            st.session_state[key] = True
+        elif key == 'audio_counter':
+            st.session_state[key] = 0
+
 st.session_state.setdefault('voz_seleccionada', {"nombre": "🇦🇷 Argentina", "lang": "es", "tld": "com.ar"})
 
 # ===================== FUNCIONES PRINCIPALES =====================
@@ -238,6 +244,7 @@ def reiniciar_quiz():
     st.session_state.indice_actual = 0
     st.session_state.respuestas_usuario = []
     st.session_state.quiz_finalizado = False
+    st.session_state.audio_counter += 1  # Incrementar contador para forzar nuevo audio
     st.rerun()
 
 def responder_pregunta(opcion_idx):
@@ -253,6 +260,7 @@ def responder_pregunta(opcion_idx):
         "es_correcta": es_correcta
     })
     st.session_state.indice_actual += 1
+    st.session_state.audio_counter += 1  # Incrementar contador para nuevo audio
     if st.session_state.indice_actual >= len(st.session_state.preguntas):
         st.session_state.quiz_finalizado = True
     st.rerun()
@@ -298,7 +306,9 @@ with st.sidebar:
                     st.session_state.indice_actual = 0
                     st.session_state.respuestas_usuario = []
                     st.session_state.quiz_finalizado = False
+                    st.session_state.audio_counter += 1  # NUEVO: incrementar para forzar nuevo audio
                     st.success(f"✅ {len(preguntas)} preguntas cargadas desde {archivo_sel}")
+                    st.rerun()  # Forzar recarga completa
             except Exception as e:
                 st.error(f"❌ Error al cargar archivo: {e}")
     else:
@@ -329,10 +339,13 @@ if not st.session_state.quiz_finalizado:
     </div>
     """, unsafe_allow_html=True)
 
+    # AUDIO CON ID ÚNICO basado en índice y contador
     if st.session_state.audio_enabled and GTTS_AVAILABLE:
         texto = f"{q['pregunta']}. " + " ".join([f"Opción {chr(65+i)}. {op}." for i, op in enumerate(q['opciones'])])
+        audio_id = f"audio_{idx}_{st.session_state.audio_counter}"  # ID único
         audio_b64 = text_to_speech(texto, lang=st.session_state.voz_seleccionada['lang'], tld=st.session_state.voz_seleccionada['tld'])
-        if audio_b64: reproducir_audio(audio_b64)
+        if audio_b64: 
+            reproducir_audio(audio_b64, audio_id)
 
     st.markdown("### Selecciona tu respuesta:")
     col1, col2 = st.columns(2)
@@ -364,10 +377,14 @@ else:
         <h2 style="color: {eval_color}; margin-top: 20px;">{eval_text}</h2>
     </div>
     """, unsafe_allow_html=True)
+    
     if st.session_state.audio_enabled and GTTS_AVAILABLE:
         texto_resultado = f"Quiz finalizado. Obtuviste {correctas} de {total}. {eval_text}"
+        audio_id = f"audio_final_{st.session_state.audio_counter}"
         audio_b64 = text_to_speech(texto_resultado)
-        if audio_b64: reproducir_audio(audio_b64)
+        if audio_b64: 
+            reproducir_audio(audio_b64, audio_id)
+    
     errores = [r for r in st.session_state.respuestas_usuario if not r["es_correcta"]]
     if errores:
         st.markdown("### ❌ Preguntas incorrectas:")
@@ -383,6 +400,10 @@ else:
             </div>
             """, unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1,1,1])
+    with col2:
+        if st.button("🔄 Reiniciar Quiz", key="reiniciar_final", use_container_width=True):
+            reiniciar_quiz()
     col1, col2, col3 = st.columns([1,1,1])
     with col2:
         if st.button("🔄 Reiniciar Quiz", key="reiniciar_final", use_container_width=True):
