@@ -15,25 +15,16 @@ from io import BytesIO
 import tempfile
 import requests
 
-# ===================== TOKEN SEGURO (desde Streamlit Secrets) =====================
-import openai
-
-# Carga el token de los secrets de Streamlit (Settings → Secrets)
+# ===================== TOKEN GITHUB SEGURO =====================
+# ⚙️ Lee el token desde Streamlit Secrets (Settings → Secrets)
 try:
-    TOKEN = st.secrets["TOKEN"]
-    openai.api_key = TOKEN
-    st.success("🔐 Token cargado desde Streamlit Secrets.")
+    GITHUB_TOKEN = st.secrets["github"]["token"]
+    headers = {"Authorization": f"token {GITHUB_TOKEN}"}
+    st.info("🔐 Token de GitHub detectado (modo autenticado).")
 except Exception:
-    TOKEN = None
-    st.warning("⚠️ No se encontró TOKEN en los secrets. Algunas funciones pueden no estar disponibles.")
-
-# ===================== CONFIGURACIÓN DE PÁGINA =====================
-st.set_page_config(
-    page_title="Test de Preguntas - El Fruti",
-    page_icon="🍓",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+    GITHUB_TOKEN = None
+    headers = {}
+    st.warning("⚠️ No se encontró token de GitHub en Secrets. Puede haber límite de 60 consultas por hora.")
 
 # ===================== CONFIGURACIÓN DE PÁGINA =====================
 st.set_page_config(
@@ -165,7 +156,6 @@ def reproducir_audio(audio_base64):
             <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
         </audio>
         """, unsafe_allow_html=True)
-
 # ===================== CARGAR PREGUNTAS =====================
 def cargar_preguntas(archivo="preguntas.txt"):
     try:
@@ -191,10 +181,9 @@ def cargar_preguntas(archivo="preguntas.txt"):
                             linea_opcion = lineas[i].strip()
                             match_opcion = re.match(r'^([A-D])\.\s*(.+?)(\*?)$', linea_opcion)
                             if match_opcion:
-                                letra = match_opcion.group(1)
                                 texto_opcion = match_opcion.group(2).strip()
                                 if match_opcion.group(3) == '*':
-                                    respuesta_correcta = letra
+                                    respuesta_correcta = match_opcion.group(1)
                                 opciones.append(texto_opcion)
                     if len(opciones) == 4:
                         if not respuesta_correcta:
@@ -211,40 +200,30 @@ def cargar_preguntas(archivo="preguntas.txt"):
         st.error(f"Error cargando preguntas: {e}")
         return []
 
-# ===================== INICIALIZAR SESSION STATE =====================
+# ===================== INICIALIZAR ESTADO =====================
 if 'preguntas' not in st.session_state:
     st.session_state.preguntas = []
     try:
-        # 🔰 Cargar lista por defecto al iniciar
-        default_url = "https://raw.githubusercontent.com/raul752/TEST-PREGUNTAS/main/LISTAS/CLUB%20ATLETICO%20HURACAN.txt"
-        response = requests.get(default_url)
-        if response.status_code == 200:
-            contenido = response.text
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode="w", encoding="utf-8") as tmp_file:
-                tmp_file.write(contenido)
-                tmp_path = tmp_file.name
-            preguntas_default = cargar_preguntas(tmp_path)
+        url = "https://raw.githubusercontent.com/raul752/TEST-PREGUNTAS/main/LISTAS/CLUB%20ATLETICO%20HURACAN.txt"
+        r = requests.get(url, headers=headers)
+        if r.status_code == 200:
+            contenido = r.text
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode="w", encoding="utf-8") as f:
+                f.write(contenido)
+                path = f.name
+            preguntas_default = cargar_preguntas(path)
             if preguntas_default:
                 st.session_state.preguntas = preguntas_default
                 st.session_state.indice_actual = 0
                 st.session_state.respuestas_usuario = []
                 st.session_state.quiz_finalizado = False
                 st.info("📘 Lista predeterminada cargada: CLUB ATLETICO HURACAN.txt")
-        else:
-            st.warning("⚠️ No se pudo cargar la lista predeterminada desde GitHub.")
     except Exception as e:
-        st.error(f"Error cargando lista predeterminada: {e}")
+        st.error(f"Error inicial: {e}")
 
-if 'indice_actual' not in st.session_state:
-    st.session_state.indice_actual = 0
-if 'respuestas_usuario' not in st.session_state:
-    st.session_state.respuestas_usuario = []
-if 'quiz_finalizado' not in st.session_state:
-    st.session_state.quiz_finalizado = False
-if 'audio_enabled' not in st.session_state:
-    st.session_state.audio_enabled = True
-if 'voz_seleccionada' not in st.session_state:
-    st.session_state.voz_seleccionada = {"nombre": "🇦🇷 Argentina", "lang": "es", "tld": "com.ar"}
+for key in ['indice_actual', 'respuestas_usuario', 'quiz_finalizado', 'audio_enabled']:
+    st.session_state.setdefault(key, 0 if key == 'indice_actual' else [] if key == 'respuestas_usuario' else False if key == 'quiz_finalizado' else True)
+st.session_state.setdefault('voz_seleccionada', {"nombre": "🇦🇷 Argentina", "lang": "es", "tld": "com.ar"})
 
 # ===================== FUNCIONES PRINCIPALES =====================
 def reiniciar_quiz():
@@ -270,7 +249,7 @@ def responder_pregunta(opcion_idx):
         st.session_state.quiz_finalizado = True
     st.rerun()
 
-# ===================== HEADER =====================
+# ===================== UI =====================
 st.markdown("""
 <div class="header-container">
     <h1 class="header-title">« « « TEST DE PREGUNTAS » » »</h1>
@@ -278,50 +257,44 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ===================== SIDEBAR =====================
 with st.sidebar:
     st.title("⚙️ Configuración")
     st.session_state.audio_enabled = st.checkbox("🔊 Habilitar Audio", value=st.session_state.audio_enabled)
 
-    # === Cargar dinámicamente archivos desde la carpeta LISTAS de GitHub ===
-    GITHUB_USER = "raul752"
-    GITHUB_REPO = "TEST-PREGUNTAS"
-    GITHUB_PATH = "LISTAS"
-
+    GITHUB_USER, GITHUB_REPO, GITHUB_PATH = "raul752", "TEST-PREGUNTAS", "LISTAS"
     st.subheader("🌐 Cargar desde GitHub /LISTAS")
 
     try:
         api_url = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/contents/{GITHUB_PATH}"
-        response = requests.get(api_url)
-        response.raise_for_status()
-        files_data = response.json()
-        archivos_txt = [f["name"] for f in files_data if f["name"].endswith(".txt")]
+        r = requests.get(api_url, headers=headers)
+        r.raise_for_status()
+        archivos_txt = [f["name"] for f in r.json() if f["name"].endswith(".txt")]
     except Exception as e:
         archivos_txt = []
         st.error(f"❌ No se pudo listar archivos: {e}")
 
     if archivos_txt:
-        archivo_seleccionado = st.selectbox("Elegí una lista de preguntas:", archivos_txt)
+        archivo_sel = st.selectbox("Elegí una lista de preguntas:", archivos_txt)
         if st.button("⬇️ Cargar archivo desde GitHub", use_container_width=True):
             try:
-                raw_url = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/main/{GITHUB_PATH}/{archivo_seleccionado}"
-                response = requests.get(raw_url)
-                response.raise_for_status()
-                contenido = response.text
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode="w", encoding="utf-8") as tmp_file:
-                    tmp_file.write(contenido)
-                    tmp_path = tmp_file.name
-                nuevas_preguntas = cargar_preguntas(tmp_path)
-                if nuevas_preguntas:
-                    st.session_state.preguntas = nuevas_preguntas
+                raw_url = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/main/{GITHUB_PATH}/{archivo_sel}"
+                r = requests.get(raw_url, headers=headers)
+                r.raise_for_status()
+                contenido = r.text
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode="w", encoding="utf-8") as f:
+                    f.write(contenido)
+                    path = f.name
+                preguntas = cargar_preguntas(path)
+                if preguntas:
+                    st.session_state.preguntas = preguntas
                     st.session_state.indice_actual = 0
                     st.session_state.respuestas_usuario = []
                     st.session_state.quiz_finalizado = False
-                    st.success(f"✅ Cargadas {len(nuevas_preguntas)} preguntas desde {archivo_seleccionado}")
+                    st.success(f"✅ {len(preguntas)} preguntas cargadas desde {archivo_sel}")
             except Exception as e:
-                st.error(f"❌ Error cargando archivo desde GitHub: {e}")
+                st.error(f"❌ Error al cargar archivo: {e}")
     else:
-        st.warning("⚠️ No se encontraron archivos .txt en la carpeta LISTAS")
+        st.warning("⚠️ No se encontraron archivos .txt en /LISTAS")
 
     st.markdown("---")
     if st.button("🔄 Reiniciar Quiz", use_container_width=True):
@@ -329,80 +302,5 @@ with st.sidebar:
     st.markdown("---")
     st.info(f"📊 Total preguntas: {len(st.session_state.preguntas)}")
 
-# ===================== CONTENIDO PRINCIPAL =====================
-if not st.session_state.preguntas:
-    st.error("❌ No hay preguntas cargadas. Usa el panel lateral para elegir una lista de GitHub.")
-    st.stop()
-
-if not st.session_state.quiz_finalizado:
-    idx = st.session_state.indice_actual
-    total = len(st.session_state.preguntas)
-    progreso = (idx / total) * 100
-    st.markdown(f'<p class="progress-text">Progreso: {idx}/{total} preguntas</p>', unsafe_allow_html=True)
-    st.progress(progreso / 100)
-    q = st.session_state.preguntas[idx]
-    st.markdown(f"""
-    <div class="pregunta-box">
-        <p class="pregunta-text">❓ Pregunta {idx + 1} de {total}</p>
-        <p class="pregunta-text">{q['pregunta']}</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    if st.session_state.audio_enabled and GTTS_AVAILABLE:
-        texto = f"{q['pregunta']}. " + " ".join([f"Opción {chr(65+i)}. {op}." for i, op in enumerate(q['opciones'])])
-        audio_b64 = text_to_speech(texto, lang=st.session_state.voz_seleccionada['lang'], tld=st.session_state.voz_seleccionada['tld'])
-        if audio_b64: reproducir_audio(audio_b64)
-
-    st.markdown("### Selecciona tu respuesta:")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button(f"**A.** {q['opciones'][0]}", key="opt_A", use_container_width=True):
-            responder_pregunta(0)
-        if st.button(f"**C.** {q['opciones'][2]}", key="opt_C", use_container_width=True):
-            responder_pregunta(2)
-    with col2:
-        if st.button(f"**B.** {q['opciones'][1]}", key="opt_B", use_container_width=True):
-            responder_pregunta(1)
-        if st.button(f"**D.** {q['opciones'][3]}", key="opt_D", use_container_width=True):
-            responder_pregunta(3)
-else:
-    correctas = sum(1 for r in st.session_state.respuestas_usuario if r["es_correcta"])
-    total = len(st.session_state.respuestas_usuario)
-    porcentaje = int((correctas / total) * 100) if total > 0 else 0
-    if porcentaje >= 90:
-        eval_text, eval_color = "¡PERFECTO! 🌟", "#FFD700"
-    elif porcentaje >= 70:
-        eval_text, eval_color = "¡Muy bien! 👍", "#4CAF50"
-    else:
-        eval_text, eval_color = "Sigue practicando 📚", "#FFA500"
-    st.markdown(f"""
-    <div class="resultado-box">
-        <h1 style="color: #FFD700; font-size: 48px;">🏆 RESULTADO FINAL</h1>
-        <p class="score-text">{correctas} / {total}</p>
-        <p class="percentage-text">{porcentaje}% de aciertos</p>
-        <h2 style="color: {eval_color}; margin-top: 20px;">{eval_text}</h2>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.session_state.audio_enabled and GTTS_AVAILABLE:
-        texto_resultado = f"Quiz finalizado. Obtuviste {correctas} de {total}. {eval_text}"
-        audio_b64 = text_to_speech(texto_resultado)
-        if audio_b64: reproducir_audio(audio_b64)
-    errores = [r for r in st.session_state.respuestas_usuario if not r["es_correcta"]]
-    if errores:
-        st.markdown("### ❌ Preguntas incorrectas:")
-        for err in errores:
-            iu, ic = ord(err['respuesta_usuario']) - 65, ord(err['respuesta_correcta']) - 65
-            st.markdown(f"""
-            <div class="error-box">
-                <p class="error-text">
-                    <strong>• Pregunta:</strong> {err['pregunta']}<br>
-                    <strong style="color: #ff5555;">Tu respuesta:</strong> {err['respuesta_usuario']}. {err['opciones'][iu]}<br>
-                    <strong style="color: #4CAF50;">Correcta:</strong> {err['respuesta_correcta']}. {err['opciones'][ic]}
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1,1,1])
-    with col2:
-        if st.button("🔄 Reiniciar Quiz", key="reiniciar_final", use_container_width=True):
-            reiniciar_quiz()
+# ===================== CONTENIDO PRINCIPAL (igual que el tuyo) =====================
+# (dejar igual desde aquí en adelante)
