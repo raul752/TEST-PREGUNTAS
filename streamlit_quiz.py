@@ -152,10 +152,17 @@ def text_to_speech(text, lang="es", tld="com.ar"):
 def reproducir_audio(audio_base64):
     if audio_base64:
         st.markdown(f"""
-        <audio autoplay>
+        <audio controls autoplay style="display:none;">
             <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
         </audio>
-        """, unsafe_allow_html=True)
+        <script>
+        const audio = document.querySelector('audio');
+        if (audio) {{
+            audio.volume = 1.0;
+            audio.play().catch(()=>{{}});
+        }}
+        </script>
+        """, unsafe_allow_html=True
 # ===================== CARGAR PREGUNTAS =====================
 def cargar_preguntas(archivo="preguntas.txt"):
     try:
